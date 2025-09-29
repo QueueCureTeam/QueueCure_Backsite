@@ -56,11 +56,10 @@ async function initDatabase() {
   await db.exec(`
     CREATE TABLE IF NOT EXISTS Prescription (
       RowID          INTEGER PRIMARY KEY AUTOINCREMENT,
-      PrescriptionID INTEGER NOT NULL,
+      PrescriptionID INTEGER NOT NULL UNIQUE,
       DrugID         INTEGER NOT NULL,
       Quantity       INTEGER NOT NULL,
       Dosage         TEXT,
-      UNIQUE(PrescriptionID, DrugID),
       FOREIGN KEY (DrugID) REFERENCES Drug(DrugID)
     );
   `);
@@ -71,7 +70,7 @@ async function initDatabase() {
       QueueID        INTEGER PRIMARY KEY AUTOINCREMENT,
       PatientID      INTEGER NOT NULL,
       Status         TEXT,
-      DateTime       TEXT,
+      DateTime       TEXT DEFAULT (datetime('now','localtime')),
       PharmCounter   TEXT,
       PharmacistID   INTEGER,
       PrescriptionID INTEGER,
