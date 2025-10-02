@@ -7,8 +7,6 @@ const axios = require("axios");
 
 const { initDatabase } = require("../database/database");
 
-const JWT_SECRET = process.env.JWT_SECRET;
-
 let pems;
 
 async function fetchPems() {
