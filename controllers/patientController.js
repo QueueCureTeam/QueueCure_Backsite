@@ -51,7 +51,7 @@ async function verifyToken (req, res, next) {
     }
 };
 
-async function registerPatient(req, res) {
+/*async function registerPatient(req, res) {
     try {
         const { Username, Email, Password, PhoneNumber, Address, NationalID, ProfileImage, Name, Surname, Gender } = req.body;
         
@@ -102,38 +102,38 @@ async function loginPatient(req, res) {
         res.status(500).json({ message: "Internal server error" });
     }
     
+}*/
+
+async function editProfile(req, res) {
+    try {
+        const {id} = req.user;
+        const {PhoneNumber, Address, ProfileImage, Name, Surname, Gender} = req.body;
+        const db = await initDatabase();
+
+        const patient = await db.get("SELECT * FROM Patient WHERE PatientID = ?", [id]);
+        if (!patient) {
+            return res.status(404).json({ message: "Patient not found" });
+        }
+
+        const updated = {
+            PhoneNumber: PhoneNumber ?? patient.PhoneNumber,
+            Address: Address ?? patient.Address,
+            ProfileImage: ProfileImage ?? patient.ProfileImage,
+            Name: Name ?? patient.Name,
+            Surname: Surname ?? patient.Surname,
+            Gender: Gender ?? patient.Gender,
+        };
+
+        await db.run(`
+            UPDATE Patient
+            SET PhoneNumber = ?, Address = ?, ProfileImage = ?, Name = ?, Surname = ?, Gender = ?
+            WHERE PatientID = ?
+        `, [updated.PhoneNumber, updated.Address, updated.ProfileImage, updated.Name, updated.Surname, updated.Gender, id]);
+        res.status(200).json({ message: "Profile updated successfully" });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Internal server error" });
+    }   
 }
-
-    async function editProfile(req, res) {
-        try {
-            const {id} = req.user;
-            const {PhoneNumber, Address, ProfileImage, Name, Surname, Gender} = req.body;
-            const db = await initDatabase();
-
-            const patient = await db.get("SELECT * FROM Patient WHERE PatientID = ?", [id]);
-            if (!patient) {
-                return res.status(404).json({ message: "Patient not found" });
-            }
-
-            const updated = {
-                PhoneNumber: PhoneNumber ?? patient.PhoneNumber,
-                Address: Address ?? patient.Address,
-                ProfileImage: ProfileImage ?? patient.ProfileImage,
-                Name: Name ?? patient.Name,
-                Surname: Surname ?? patient.Surname,
-                Gender: Gender ?? patient.Gender,
-            };
-
-            await db.run(`
-                UPDATE Patient
-                SET PhoneNumber = ?, Address = ?, ProfileImage = ?, Name = ?, Surname = ?, Gender = ?
-                WHERE PatientID = ?
-            `, [updated.PhoneNumber, updated.Address, updated.ProfileImage, updated.Name, updated.Surname, updated.Gender, id]);
-            res.status(200).json({ message: "Profile updated successfully" });
-        } catch (error) {
-            console.error(error);
-            res.status(500).json({ message: "Internal server error" });
-        }   
-    }
 
 module.exports = { registerPatient, loginPatient, verifyToken, editProfile };
