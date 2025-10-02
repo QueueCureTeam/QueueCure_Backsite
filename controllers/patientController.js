@@ -2,24 +2,54 @@ require("dotenv").config();
 
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const jwkToPem = require("jwk-to-pem");
+const axios = require("axios");
+
 const { initDatabase } = require("../database/database");
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
-function verifyToken(req, res, next) {
-    const authHeader = req.headers["authorization"];
-    const token = authHeader && authHeader.split(" ")[1];
-    if (!token) {
-        return res.status(401).json({ message: "Unauthorized" });
-    }
-    jwt.verify(token, JWT_SECRET, (err, user) => {
-        if (err) {
-            return res.status(403).json({ message: "Forbidden" });
-        }
-        req.user = user;
-        next();
-    });
+let pems;
+
+async function fetchPems() {
+  if (pems) return pems;
+
+  const region = process.env.AWS_REGION;
+  const userPoolId = process.env.USER_POOL_ID;
+  const url = `https://cognito-idp.${region}.amazonaws.com/${userPoolId}/.well-known/jwks.json`;
+
+  const { data } = await axios.get(url);
+  pems = {};
+  data.keys.forEach(key => {
+    pems[key.kid] = jwkToPem(key);
+  });
+  return pems;
 }
+
+async function verifyToken (req, res, next) {
+    const token = req.headers.authorization?.split(" ")[1];
+    if (!token) return res.status(401).json({ message: "Unauthorized" });
+
+    try {
+        const pems = await fetchPems();
+        const decoded = jwt.decode(token, { complete: true });
+        if (!decoded || !decoded.header) {
+            return res.status(401).json({ message: "Invalid token", error: token });
+        }
+        const kid = decoded.header.kid;
+        const pem = pems[kid];
+        if (!pem) throw new Error("Invalid token");
+
+        jwt.verify(token, pem, { algorithms: ["RS256"] }, (err, payload) => {
+        if (err) return res.status(401).json({ message: "Invalid token" });
+        req.user = payload; 
+        next();
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(401).json({ message: "Unauthorized" });
+    }
+};
 
 async function registerPatient(req, res) {
     try {

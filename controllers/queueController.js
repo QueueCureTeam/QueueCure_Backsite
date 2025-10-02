@@ -1,7 +1,7 @@
 require("dotenv").config();
 const { initDatabase } = require("../database/database");
 
-async function getQueue(res) {
+async function getQueue(req, res) {
     try {
         const db = await initDatabase();
         const queue = await db.all("SELECT * FROM Queue");
