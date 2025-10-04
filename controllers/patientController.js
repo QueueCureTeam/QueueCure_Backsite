@@ -1,6 +1,5 @@
 require("dotenv").config();
 
-const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const jwkToPem = require("jwk-to-pem");
 const axios = require("axios");
@@ -134,4 +133,4 @@ async function editProfile(req, res) {
     }   
 }
 
-module.exports = { registerPatient, loginPatient, verifyToken, editProfile };
+module.exports = { verifyToken, editProfile };

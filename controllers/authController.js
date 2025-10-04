@@ -2,11 +2,9 @@ const path = require("path");
 const cognitoService = require("../services/cognitoService");
 
 exports.signup = async (req, res) => {
-    const { username, password, email, givenName, familyName, birthdate, gender, nationalId, phoneNumber } = req.body;
+    const { email, password } = req.body;
     try {
-        const user = await cognitoService.signUp(username, password, {
-            email, givenName, familyName, birthdate, gender, nationalId, phoneNumber
-        });
+        const user = await cognitoService.signUp(email, password);
         res.json({ message: "Signup successful", user });
     } catch (err) {
         console.error(err);

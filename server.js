@@ -27,6 +27,11 @@ const checkAuth = (req, res, next) => {
     next();
 };
 
+const { verifyToken } = require("./controllers/patientController");
+app.get("/api/protected", verifyToken, (req, res) => {
+    res.json({ message: "Hello " + req.user.email });
+});
+
 // routes
 app.use("/api/patient", patientRoutes);
 app.use("/api/queue", queueRoutes);

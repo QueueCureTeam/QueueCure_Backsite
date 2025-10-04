@@ -15,7 +15,7 @@
     const data = Object.fromEntries(new FormData(form).entries());
 
     try {
-      const res = await fetch('/confirm', {
+      const res = await fetch('/auth/confirm', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)

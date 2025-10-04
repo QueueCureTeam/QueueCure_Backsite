@@ -29,19 +29,12 @@ async function getUsernameByEmail(email) {
 }
 
 
-exports.signUp = async (username, password, attributes) => {
-
+exports.signUp = async (email, password) => {
     const attributeList = [
-        new CognitoUserAttribute({ Name: "email", Value: attributes.email }),
-        new CognitoUserAttribute({ Name: "given_name", Value: attributes.givenName }),
-        new CognitoUserAttribute({ Name: "family_name", Value: attributes.familyName }),
-        new CognitoUserAttribute({ Name: "birthdate", Value: attributes.birthdate }),
-        new CognitoUserAttribute({ Name: "gender", Value: attributes.gender }),
-        new CognitoUserAttribute({ Name: "custom:National_ID", Value: String(attributes.nationalId) }),
-        new CognitoUserAttribute({ Name: "custom:Phone_Number", Value: attributes.phoneNumber })
+        new CognitoUserAttribute({ Name: "email", Value: email })
     ];
     return new Promise((resolve, reject) => {
-        userPool.signUp(username, password, attributeList, null, (err, result) => {
+        userPool.signUp(email, password, attributeList, null, (err, result) => {
             if (err) return reject(err);
             resolve(result.user.getUsername());
         });
