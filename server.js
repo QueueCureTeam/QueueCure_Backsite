@@ -41,6 +41,9 @@ app.get("/", checkAuth, (req, res) => {
     res.sendFile(path.join(__dirname, "public", "signup.html"));
 });
 
+app.get("/auth/callback", checkAuth, (req, res) => {
+    res.sendFile(path.join(__dirname, "public", "callback.html"));
+});
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
