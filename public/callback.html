@@ -22,8 +22,14 @@
         localStorage.setItem("id_token", tokens.id_token);
         localStorage.setItem("access_token", tokens.access_token);
         localStorage.setItem("refresh_token", tokens.refresh_token);
+        
+        const frontendUrl = "http://localhost:3001";
+        const params = new URLSearchParams({
+          id_token: tokens.id_token,
+          access_token: tokens.access_token,
+        });
 
-        window.location.href = `/token.html?access=${tokens.access_token}&id=${tokens.id_token}`; 
+        window.location.href = `${frontendUrl}/user/test/?${params.toString()}`; 
       })
       .catch(err => {
         document.body.innerHTML = "Error: " + err.message;

@@ -24,11 +24,6 @@ router.post("/callback", async (req, res) => {
         });
 
         const { access_token, id_token, refresh_token } = response.data;
-        console.log("=== Cognito Tokens Generated ===");
-        console.log("Access Token:", access_token);
-        console.log("ID Token:", id_token);
-        console.log("Refresh Token:", refresh_token);
-        console.log("================================");
         res.json({ access_token, id_token, refresh_token });
 
     } catch (err) {

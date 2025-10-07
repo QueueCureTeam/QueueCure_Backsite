@@ -43,6 +43,16 @@ app.get("/", (req, res) => {
 app.get("/auth/callback", (req, res) => {
     res.sendFile(path.join(__dirname, "public", "callback.html"));
 });
+
+app.get('/auth/login', (req, res) => {
+  const clientId = process.env.CLIENT_ID;
+  const redirectUri = "http://localhost:3000/auth/callback"; 
+  const cognitoDomain = process.env.COGNITO_DOMAIN;
+
+  const loginUrl = `https://${cognitoDomain}/login?client_id=${clientId}&response_type=code&scope=email+openid+phone&redirect_uri=${encodeURIComponent(redirectUri)}`;
+  res.redirect(loginUrl);
+});
+
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
