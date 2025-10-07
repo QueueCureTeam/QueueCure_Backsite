@@ -8,11 +8,11 @@
   <h2>Processing login...</h2>
 
   <script>
-     const params = new URLSearchParams(window.location.search);
+    const params = new URLSearchParams(window.location.search);
     const code = params.get("code");
 
     if (code) {
-      fetch("/auth/callback", {
+      fetch(`/auth/callback?code=${encodeURIComponent(code)}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ code })
@@ -21,7 +21,9 @@
       .then(tokens => {
         localStorage.setItem("id_token", tokens.id_token);
         localStorage.setItem("access_token", tokens.access_token);
-        window.location.href = "/login.html"; // กลับไปหน้า login หรือ home
+        localStorage.setItem("refresh_token", tokens.refresh_token);
+
+        window.location.href = `/token.html?access=${tokens.access_token}&id=${tokens.id_token}`; 
       })
       .catch(err => {
         document.body.innerHTML = "Error: " + err.message;

@@ -2,19 +2,11 @@ const express = require("express");
 const router = express.Router();
 const axios = require("axios");
 const qs = require("querystring");
-const authController = require("../controllers/authController");
-
-router.get("/signup", authController.showSignupPage);
-router.get("/confirm", authController.showConfirmPage);
-router.get("/login", authController.showLoginPage);
-
-router.post("/signup", authController.signup);
-router.post("/login", authController.login);
-router.post("/confirm", authController.confirm);
 
 // Google_token
 router.post("/callback", async (req, res) => {
-    const { code } = req.body;
+    const code = req.body.code || req.query.code;
+    console.log(code);
     if (!code) return res.status(400).json({ error: "No code provided" });
 
     const tokenUrl = `https://${process.env.COGNITO_DOMAIN}/oauth2/token`;
@@ -32,7 +24,13 @@ router.post("/callback", async (req, res) => {
         });
 
         const { access_token, id_token, refresh_token } = response.data;
+        console.log("=== Cognito Tokens Generated ===");
+        console.log("Access Token:", access_token);
+        console.log("ID Token:", id_token);
+        console.log("Refresh Token:", refresh_token);
+        console.log("================================");
         res.json({ access_token, id_token, refresh_token });
+
     } catch (err) {
         console.error(err.response?.data || err.message);
         res.status(400).json({ error: "Failed to exchange code for token" });

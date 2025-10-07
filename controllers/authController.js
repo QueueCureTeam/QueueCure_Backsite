@@ -1,4 +1,4 @@
-const path = require("path");
+/* const path = require("path");
 const cognitoService = require("../services/cognitoService");
 
 exports.signup = async (req, res) => {
@@ -43,5 +43,5 @@ exports.showConfirmPage = (req, res) => {
 
 exports.showLoginPage = (req, res) => {
     res.sendFile(path.join(__dirname, "../public", "login.html"));
-};
+}; */
 

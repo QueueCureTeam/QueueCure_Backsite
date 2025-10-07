@@ -1,4 +1,4 @@
-const {
+/* const {
     CognitoUserPool,
     CognitoUserAttribute,
     CognitoUser,
@@ -86,4 +86,4 @@ exports.confirmUser = (username, code) => {
             resolve(result);
         });
     });
-};
+}; */

@@ -1,7 +1,6 @@
 require("dotenv").config();
 const express = require("express");
 const bodyParser = require("body-parser");
-const session = require("express-session");
 const path = require("path");
 
 // routes
@@ -16,16 +15,16 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static("public"));
 
-app.use(session({
+/* app.use(session({
     secret: "Nettae118",
     resave: false,
     saveUninitialized: false,
-}));
+})); */
 
-const checkAuth = (req, res, next) => {
+/* const checkAuth = (req, res, next) => {
     req.isAuthenticated = !!req.session.userInfo;
     next();
-};
+}; */
 
 const { verifyToken } = require("./controllers/patientController");
 app.get("/api/protected", verifyToken, (req, res) => {
@@ -37,11 +36,11 @@ app.use("/api/patient", patientRoutes);
 app.use("/api/queue", queueRoutes);
 app.use("/auth", authRoutes);
 
-app.get("/", checkAuth, (req, res) => {
+app.get("/", (req, res) => {
     res.sendFile(path.join(__dirname, "public", "signup.html"));
 });
 
-app.get("/auth/callback", checkAuth, (req, res) => {
+app.get("/auth/callback", (req, res) => {
     res.sendFile(path.join(__dirname, "public", "callback.html"));
 });
 app.listen(PORT, () => {

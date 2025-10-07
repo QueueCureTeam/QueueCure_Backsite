@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Tokens</title>
+</head>
+<body>
+  <h2>✅ Logged in successfully</h2>
+  <pre id="output"></pre>
+
+  <script>
+    const access = localStorage.getItem("access_token");
+    const id = localStorage.getItem("id_token");
+
+    const output = document.getElementById("output");
+
+    if (access && id) {
+      output.textContent = JSON.stringify({
+        access_token: access,
+        id_token: id
+      }, null, 2);
+    } else {
+      output.textContent = "⚠️ No tokens found.";
+    }
+  </script>
+</body>
+</html>
