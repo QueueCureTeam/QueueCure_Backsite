@@ -1,7 +1,8 @@
 const express = require("express")
-const { verifyToken, editProfile } = require("../controllers/patientController");
+const { verifyToken, editProfile, getProfile} = require("../controllers/patientController");
 const router = express.Router();
 
-router.put("/edit-profile", verifyToken, editProfile);
+router.put("/editProfile", verifyToken, editProfile);
+router.get("/getProfile", verifyToken, getProfile);
 
 module.exports = router;

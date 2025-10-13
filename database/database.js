@@ -14,16 +14,14 @@ async function initDatabase() {
   await db.exec(`
     CREATE TABLE IF NOT EXISTS Patient (
       PatientID     INTEGER PRIMARY KEY AUTOINCREMENT,
-      Username      TEXT NOT NULL UNIQUE,
-      Email         TEXT NOT NULL UNIQUE,
-      Password      TEXT NOT NULL,
+      CognitoSub TEXT UNIQUE NOT NULL,
       PhoneNumber   TEXT,
       Address       TEXT,
-      NationalID    TEXT UNIQUE,
+      NationalID    TEXT,
       ProfileImage  TEXT,
-      Name          TEXT NOT NULL,
-      Surname       TEXT NOT NULL,
-      Gender        TEXT
+      Name          TEXT,
+      Surname       TEXT,
+      Gender        TEXT 
     );
   `);
 
@@ -46,8 +44,6 @@ async function initDatabase() {
       Details       TEXT,
       Expiry_date   DATE,
       Price         REAL,
-      Indication    TEXT,
-      SideEffects   TEXT,
       StockQuantity INTEGER
     );
   `);

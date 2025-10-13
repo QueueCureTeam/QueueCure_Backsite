@@ -1,30 +1,29 @@
 require("dotenv").config();
 const express = require("express");
 const bodyParser = require("body-parser");
+const cors = require("cors");
 const path = require("path");
 
 // routes
 const patientRoutes = require("./routes/patientRoutes");
 const queueRoutes = require("./routes/queueRoutes");
 const authRoutes = require("./routes/authRoutes");
+const drugRoutes = require("./routes/drugRoutes");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+app.use(cors({
+  origin: "http://localhost:3001",
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  credentials: true, 
+}));
+
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static("public"));
 
-/* app.use(session({
-    secret: "Nettae118",
-    resave: false,
-    saveUninitialized: false,
-})); */
-
-/* const checkAuth = (req, res, next) => {
-    req.isAuthenticated = !!req.session.userInfo;
-    next();
-}; */
 
 const { verifyToken } = require("./controllers/patientController");
 app.get("/api/protected", verifyToken, (req, res) => {
@@ -34,6 +33,7 @@ app.get("/api/protected", verifyToken, (req, res) => {
 // routes
 app.use("/api/patient", patientRoutes);
 app.use("/api/queue", queueRoutes);
+app.use("api/drug", drugRoutes);
 app.use("/auth", authRoutes);
 
 app.get("/", (req, res) => {

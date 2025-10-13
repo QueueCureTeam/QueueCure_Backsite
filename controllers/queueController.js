@@ -1,7 +1,7 @@
 require("dotenv").config();
 const { initDatabase } = require("../database/database");
 
-async function getQueue(req, res) {
+async function getAllQueues(req, res) { // ทุกภาคส่วน
     try {
         const db = await initDatabase();
         const queue = await db.all("SELECT * FROM Queue");
@@ -12,7 +12,7 @@ async function getQueue(req, res) {
     }
 }
 
-async function addQueue(req, res) {
+async function addQueue(req, res) { // หมอ
   try {
     const { PatientID, Status, PharmCounter, PharmacistID, PrescriptionID } = req.body;
 
@@ -37,7 +37,7 @@ async function addQueue(req, res) {
   }
 }
 
-async function deleteQueue(req, res) {
+async function deleteQueue(req, res) { // หมอ
     try {
         const { id } = req.params;
         const db = await initDatabase();
@@ -50,7 +50,7 @@ async function deleteQueue(req, res) {
     
 }
 
-async function getQueueDetails(req, res) {
+async function getQueue(req, res) { // หมอ + เภสัช
     try {
         const { id } = req.params;
         const db = await initDatabase();
@@ -62,7 +62,20 @@ async function getQueueDetails(req, res) {
     }
 }
 
-async function updateQueueStatus(req, res) {
+async function updateQueue(req, res) { // หมอ 
+    try {
+        const { id } = req.params;
+        const { PharmCounter, PharmacistID, PrescriptionID } = req.body
+        const db = await initDatabase();
+        const queue = await db.get("UPDATE Queue SET PharmCounter = ?, PharmacistID = ?, PrescriptionID = ? WHERE QueueID = ?", [PharmCounter, PharmacistID, PrescriptionID, id]);
+        res.status(200).json(queue);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+}
+
+async function updateQueueStatus(req, res) { // เภสัช
     try {
         const { id } = req.params;
         const { Status } = req.body;
@@ -75,4 +88,4 @@ async function updateQueueStatus(req, res) {
     }
 }
 
-module.exports = { getQueue, addQueue, deleteQueue, updateQueueStatus, getQueueDetails };
+module.exports = { getQueue, addQueue, deleteQueue, updateQueueStatus, getAllQueues, updateQueue };

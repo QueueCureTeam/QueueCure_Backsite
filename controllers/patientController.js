@@ -37,10 +37,18 @@ async function verifyToken (req, res, next) {
         const pem = pems[kid];
         if (!pem) throw new Error("Invalid token");
 
-        jwt.verify(token, pem, { algorithms: ["RS256"] }, (err, payload) => {
+        jwt.verify(
+            token, 
+            pem, 
+                { 
+                algorithms: ["RS256"],
+                issuer: `https://cognito-idp.${process.env.AWS_REGION}.amazonaws.com/${process.env.USER_POOL_ID}`,
+                audience: process.env.CLIENT_ID 
+                }, 
+            (err, payload) => {
         if (err) return res.status(401).json({ message: "Invalid token" });
-        req.user = payload; 
-        next();
+            req.user = payload; 
+            next();
         });
     } catch (err) {
         console.error(err);
@@ -48,84 +56,75 @@ async function verifyToken (req, res, next) {
     }
 };
 
-/*async function registerPatient(req, res) {
-    try {
-        const { Username, Email, Password, PhoneNumber, Address, NationalID, ProfileImage, Name, Surname, Gender } = req.body;
-        
-        if (!Username || !Email || !Password || !PhoneNumber || !NationalID || !Name || !Surname || !Gender) {
-            return res.status(400).json({ message: "Missing required fields" });
-        }
-        const db = await initDatabase();
-
-        const existing = await db.get("SELECT * FROM Patient WHERE Username = ? OR Email = ?", [Username]);
-        if (existing) {
-            return res.status(400).json({ message: "Username or Email already exists" });
-        }
-
-        const hashedPassword = await bcrypt.hash(Password, 10);
-
-        await db.run(
-            `INSERT INTO Patient (Username, Email, Password, PhoneNumber, Address, NationalID, ProfileImage, Name, Surname, Gender) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [Username, Email, hashedPassword, PhoneNumber, Address, NationalID, ProfileImage, Name, Surname, Gender]
-        );
-
-        res.status(201).json({ message: "Patient registered successfully" });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: "Internal server error" });
+function checkRole(requiredRole) {
+  return (req, res, next) => {
+    if (!req.user) {
+      return res.status(403).json({ message: "Forbidden: No user information found." });
     }
+    const userGroups = req.user['cognito:groups'];
+
+    if (userGroups && userGroups.includes(requiredRole)) {
+      next(); 
+    } else {
+      res.status(403).json({ message: "Forbidden: You do not have the required permissions." });
+    }
+  };
 }
 
 
-async function loginPatient(req, res) {
+async function getProfile (req, res) {
     try {
-        const { Email, Password } = req.body;
-        if (!Email || !Password) {
-            return res.status(400).json({ message: "Missing required fields" });
-        }
+        const userId = req.user.sub;
         const db = await initDatabase();
-        const user = await db.get("SELECT * FROM Patient WHERE Email = ?", [Email]);
-        if (!user) {
-            return res.status(401).json({ message: "Invalid email or password" });
+
+        let patient;
+        try {
+            patient = await db.get("SELECT * FROM Patient WHERE CognitoSub = ?", [userId]);
+        } catch (err) {
+            console.error("SQL Error:", err.message);
+            return res.status(500).json({ message: "DB query failed" });
         }
-        const isPasswordValid = await bcrypt.compare(Password, user.Password);
-        if (!isPasswordValid) {
-            return res.status(401).json({ message: "Invalid email or password" });
+
+        if (!patient) {
+            await db.run(
+                "INSERT INTO Patient (CognitoSub, Name, Surname, NationalID) VALUES (?, ?, ?, ?)",
+                [userId, "", "", ""]
+            );
+        const newPatient = await db.get("SELECT * FROM Patient WHERE PatientID = ?", [userId]);
+        return res.status(200).json(newPatient);
         }
-        const token = jwt.sign({ id: user.PatientID }, JWT_SECRET, {expiresIn: "1d"});
-        res.status(200).json({ token });
-    } catch (error) {
-        console.error(error);
+
+        res.status(200).json(patient);  
+        } catch (err) {
+        console.error(err);
         res.status(500).json({ message: "Internal server error" });
     }
-    
-}*/
+};
 
 async function editProfile(req, res) {
     try {
-        const {id} = req.user;
-        const {PhoneNumber, Address, ProfileImage, Name, Surname, Gender} = req.body;
+        const cognitoSub = req.user.sub; // มาจาก JWT
+        const { PhoneNumber, Address, ProfileImage, Name, Surname, Gender, NationalID } = req.body;
+
         const db = await initDatabase();
 
-        const patient = await db.get("SELECT * FROM Patient WHERE PatientID = ?", [id]);
-        if (!patient) {
-            return res.status(404).json({ message: "Patient not found" });
-        }
+        const patient = await db.get("SELECT * FROM Patient WHERE CognitoSub = ?", [cognitoSub]);
 
-        const updated = {
-            PhoneNumber: PhoneNumber ?? patient.PhoneNumber,
-            Address: Address ?? patient.Address,
-            ProfileImage: ProfileImage ?? patient.ProfileImage,
-            Name: Name ?? patient.Name,
-            Surname: Surname ?? patient.Surname,
-            Gender: Gender ?? patient.Gender,
-        };
+        if (!patient) {
+        await db.run(`
+            INSERT INTO Patient (CognitoSub, PhoneNumber, Address, ProfileImage, Name, Surname, Gender, NationalID)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        `, [cognitoSub, PhoneNumber, Address, ProfileImage, Name, Surname, Gender, NationalID]);
+
+        return res.status(201).json({ message: "Profile created successfully" });
+        }
 
         await db.run(`
             UPDATE Patient
-            SET PhoneNumber = ?, Address = ?, ProfileImage = ?, Name = ?, Surname = ?, Gender = ?
-            WHERE PatientID = ?
-        `, [updated.PhoneNumber, updated.Address, updated.ProfileImage, updated.Name, updated.Surname, updated.Gender, id]);
+            SET PhoneNumber = ?, Address = ?, ProfileImage = ?, Name = ?, Surname = ?, Gender = ?, NationalID = ?
+            WHERE CognitoSub = ?
+        `, [PhoneNumber, Address, ProfileImage, Name, Surname, Gender, NationalID, cognitoSub]);
+
         res.status(200).json({ message: "Profile updated successfully" });
     } catch (error) {
         console.error(error);
@@ -133,4 +132,4 @@ async function editProfile(req, res) {
     }   
 }
 
-module.exports = { verifyToken, editProfile };
+module.exports = { verifyToken, getProfile, editProfile, checkRole};
