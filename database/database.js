@@ -21,7 +21,8 @@ async function initDatabase() {
       ProfileImage  TEXT,
       Name          TEXT,
       Surname       TEXT,
-      Gender        TEXT 
+      Gender        TEXT,
+      Age           INTEGER
     );
   `);
 
@@ -29,9 +30,11 @@ async function initDatabase() {
   await db.exec(`
     CREATE TABLE IF NOT EXISTS Staff (
       StaffID   INTEGER PRIMARY KEY AUTOINCREMENT,
+      CognitoSub TEXT UNIQUE NOT NULL,
       Role      TEXT NOT NULL,
       Name      TEXT NOT NULL,
       Surname   TEXT NOT NULL,
+      LicenseID TEXT NOT NULL,
       Gender    TEXT
     );
   `);

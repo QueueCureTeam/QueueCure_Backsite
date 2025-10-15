@@ -1,13 +1,15 @@
 const express = require("express")
-const { verifyToken, checkRole } = require("../controllers/patientController");
-const { getAllQueues, addQueue, deleteQueue, updateQueueStatus, getQueue, updateQueue } = require("../controllers/queueController");
+const { verifyToken, checkRole } = require("../controllers/authController");
+const { getAllQueues, getAllPatient, getPatient, addQueue, deleteQueue, updateQueueStatus, getQueue, updateQueue } = require("../controllers/queueController");
 const router = express.Router();
 
-router.get("/", verifyToken, getAllQueues);
-router.post("/addQueue", verifyToken, checkRole('Doctor'), addQueue);
-router.delete("/deleteQueue/:id", verifyToken, checkRole('Doctor'), deleteQueue);
+router.get("/", getAllQueues);
+router.get("/patients", verifyToken, checkRole('doctor'), getAllPatient);
+router.get("/patients/:id", verifyToken, checkRole('doctor'), getPatient);
+router.post("/addQueue", verifyToken, checkRole('doctor'), addQueue);
+router.delete("/deleteQueue/:id", verifyToken, checkRole('doctor'), deleteQueue);
 router.put("/updateStatus/:id", verifyToken, checkRole('Pharmacist'), updateQueueStatus);
 router.get("/:id", verifyToken, getQueue);
-router.put("/updateQueue/:id", verifyToken, checkRole('Doctor'), updateQueue);
+router.put("/updateQueue/:id", verifyToken, checkRole('doctor'), updateQueue);
 
 module.exports = router;

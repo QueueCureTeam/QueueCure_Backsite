@@ -29,7 +29,7 @@
           access_token: tokens.access_token,
         });
 
-        window.location.href = `${frontendUrl}/user/test/?${params.toString()}`; 
+        window.location.href = `${frontendUrl}/logging/?${params.toString()}`; 
       })
       .catch(err => {
         document.body.innerHTML = "Error: " + err.message;

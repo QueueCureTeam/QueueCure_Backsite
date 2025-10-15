@@ -9,6 +9,7 @@ const patientRoutes = require("./routes/patientRoutes");
 const queueRoutes = require("./routes/queueRoutes");
 const authRoutes = require("./routes/authRoutes");
 const drugRoutes = require("./routes/drugRoutes");
+const staffRoutes = require("./routes/staffRoutes");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -25,7 +26,8 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static("public"));
 
 
-const { verifyToken } = require("./controllers/patientController");
+
+const { verifyToken } = require("./controllers/authController");
 app.get("/api/protected", verifyToken, (req, res) => {
     res.json({ message: "Hello " + req.user.email });
 });
@@ -33,7 +35,8 @@ app.get("/api/protected", verifyToken, (req, res) => {
 // routes
 app.use("/api/patient", patientRoutes);
 app.use("/api/queue", queueRoutes);
-app.use("api/drug", drugRoutes);
+app.use("/api/drug", drugRoutes);
+app.use("/api/staff", staffRoutes);
 app.use("/auth", authRoutes);
 
 app.get("/", (req, res) => {

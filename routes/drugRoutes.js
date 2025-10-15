@@ -1,8 +1,9 @@
 const express = require("express")
+const { verifyToken, checkRole } = require("../controllers/authController");
 const { getAllDrug, getDrug} = require("../controllers/drugController");
 const router = express.Router();
 
-router.put("/getAllDrug", getAllDrug);
-router.get("/getDrug", getDrug);
+router.get("/getAllDrug", verifyToken, checkRole('doctor'), getAllDrug);
+router.get("/getDrug", verifyToken, checkRole('doctor'), getDrug);
 
 module.exports = router;

@@ -1,5 +1,6 @@
 const express = require("express")
-const { verifyToken, editProfile, getProfile} = require("../controllers/patientController");
+const { verifyToken } = require("../controllers/authController");
+const { editProfile, getProfile} = require("../controllers/patientController");
 const router = express.Router();
 
 router.put("/editProfile", verifyToken, editProfile);

@@ -6,7 +6,6 @@ const qs = require("querystring");
 // Google_token
 router.post("/callback", async (req, res) => {
     const code = req.body.code || req.query.code;
-    console.log(code);
     if (!code) return res.status(400).json({ error: "No code provided" });
 
     const tokenUrl = `https://${process.env.COGNITO_DOMAIN}/oauth2/token`;

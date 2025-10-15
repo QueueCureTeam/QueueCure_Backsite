@@ -88,4 +88,28 @@ async function updateQueueStatus(req, res) { // เภสัช
     }
 }
 
-module.exports = { getQueue, addQueue, deleteQueue, updateQueueStatus, getAllQueues, updateQueue };
+async function getAllPatient(req, res) {
+   try {
+        const { id } = req.params;
+        const db = await initDatabase();
+        const patient = await db.get("SELECT * FROM Patient", [id]);
+        res.status(200).json(patient);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+}
+
+async function getPatient(req, res) {
+   try {
+        const { id } = req.params;
+        const db = await initDatabase();
+        const patient = await db.get("SELECT * FROM Patient WHERE PatientID = ?", [id]);
+        res.status(200).json(patient);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+}
+
+module.exports = { getQueue, addQueue, deleteQueue, updateQueueStatus, getAllQueues, updateQueue, getAllPatient, getPatient };
