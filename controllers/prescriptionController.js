@@ -14,16 +14,31 @@ async function getAllPrescription(req, res) {
 }
 
 async function getPrescription(req, res) {
-    try {
+     try {
         const db = await initDatabase();
         const { id } = req.params;
-        const Prescription = await db.get("SELECT * FROM Prescription WHERE PrescriptionID = ?", [id]);
-        res.status(200).json(Prescription);
+        
+        const Prescriptions = await db.all(`
+            SELECT 
+                p.RowID,
+                p.PrescriptionID,
+                p.DrugID,
+                p.Quantity,
+                p.Dosage,
+                d.Name as DrugName,
+                d.Details as DrugDetails,
+                d.Price as DrugPrice,
+                d.Expiry_date
+            FROM Prescription p
+            LEFT JOIN Drug d ON p.DrugID = d.DrugID
+            WHERE p.PrescriptionID = ?
+        `, [id]);
+        
+        res.status(200).json(Prescriptions);
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: "Internal server error" });
     }
-    
 }
 
 async function addPrescription(req, res) { 
