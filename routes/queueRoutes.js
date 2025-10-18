@@ -7,7 +7,7 @@ router.get("/", getAllQueues);
 router.get("/patients", verifyToken, checkRole('doctor'), getAllPatient);
 router.get("/patients/:id", verifyToken, checkRole('doctor'), getPatient);
 router.post("/addQueue", verifyToken, checkRole('doctor'), addQueue);
-router.delete("/deleteQueue/:id", verifyToken, checkRole('doctor'), deleteQueue);
+router.delete("/:id", verifyToken, checkRole('doctor'), deleteQueue);
 router.put("/updateStatus/:id", verifyToken, checkRole('Pharmacist'), updateQueueStatus);
 router.get("/:id", verifyToken, checkRole('doctor'), getQueue);
 router.put("/updateQueue/:id", verifyToken, checkRole('doctor'), updateQueue);

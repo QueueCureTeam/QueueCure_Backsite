@@ -46,8 +46,15 @@ async function deleteQueue(req, res) { // หมอ
     try {
         const { id } = req.params;
         const db = await initDatabase();
+        const queue = await db.get("SELECT PrescriptionID FROM Queues WHERE QueueID = ?", [id]);
+         if (!queue) {
+            return res.status(404).json({ message: "Queue not found" });
+        }
+        
+        const prescriptionID = queue.PrescriptionID;
+        await db.run("DELETE FROM Prescription WHERE PrescriptionID = ?", [prescriptionID]);
         await db.run("DELETE FROM Queues WHERE QueueID = ?", [id]);
-        res.status(200).json({ message: "Queue deleted successfully" });
+        res.status(200).json({ message: "Queue and Prescriptions deleted successfully!" });
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: "Internal server error" });
