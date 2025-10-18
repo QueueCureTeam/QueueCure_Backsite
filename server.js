@@ -9,6 +9,7 @@ const patientRoutes = require("./routes/patientRoutes");
 const queueRoutes = require("./routes/queueRoutes");
 const authRoutes = require("./routes/authRoutes");
 const drugRoutes = require("./routes/drugRoutes");
+const prescriptionRoutes = require("./routes/prescriptRoutes");
 const staffRoutes = require("./routes/staffRoutes");
 
 const app = express();
@@ -36,6 +37,7 @@ app.get("/api/protected", verifyToken, (req, res) => {
 app.use("/api/patient", patientRoutes);
 app.use("/api/queue", queueRoutes);
 app.use("/api/drug", drugRoutes);
+app.use("/api/prescription", prescriptionRoutes);
 app.use("/api/staff", staffRoutes);
 app.use("/auth", authRoutes);
 

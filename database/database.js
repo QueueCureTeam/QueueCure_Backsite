@@ -21,8 +21,8 @@ async function initDatabase() {
       ProfileImage  TEXT,
       Name          TEXT,
       Surname       TEXT,
-      Gender        TEXT,
-      Age           INTEGER
+      Age           INTEGER,
+      Gender        TEXT
     );
   `);
 
@@ -55,7 +55,7 @@ async function initDatabase() {
   await db.exec(`
     CREATE TABLE IF NOT EXISTS Prescription (
       RowID          INTEGER PRIMARY KEY AUTOINCREMENT,
-      PrescriptionID INTEGER NOT NULL UNIQUE,
+      PrescriptionID TEXT NOT NULL,
       DrugID         INTEGER NOT NULL,
       Quantity       INTEGER NOT NULL,
       Dosage         TEXT,
@@ -65,17 +65,16 @@ async function initDatabase() {
 
   //Queue
   await db.exec(`
-    CREATE TABLE IF NOT EXISTS Queue (
+    CREATE TABLE IF NOT EXISTS Queues (
       QueueID        INTEGER PRIMARY KEY AUTOINCREMENT,
       PatientID      INTEGER NOT NULL,
       Status         TEXT,
       DateTime       TEXT DEFAULT (datetime('now','localtime')),
       PharmCounter   TEXT,
-      PharmacistID   INTEGER,
-      PrescriptionID INTEGER,
+      DoctorID   INTEGER,
+      PrescriptionID TEXT,
       FOREIGN KEY (PatientID) REFERENCES Patient(PatientID),
-      FOREIGN KEY (PharmacistID) REFERENCES Staff(StaffID),
-      FOREIGN KEY (PrescriptionID) REFERENCES Prescription(PrescriptionID)
+      FOREIGN KEY (DoctorID) REFERENCES Staff(StaffID)
     );
   `);
 

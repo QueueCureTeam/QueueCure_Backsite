@@ -4,7 +4,7 @@ const { initDatabase } = require("../database/database");
 async function getAllQueues(req, res) { // ทุกภาคส่วน
     try {
         const db = await initDatabase();
-        const queue = await db.all("SELECT * FROM Queue");
+        const queue = await db.all("SELECT * FROM Queues");
         res.status(200).json(queue);
     } catch (error) {
         console.error(error);
@@ -14,20 +14,25 @@ async function getAllQueues(req, res) { // ทุกภาคส่วน
 
 async function addQueue(req, res) { // หมอ
   try {
-    const { PatientID, Status, PharmCounter, PharmacistID, PrescriptionID } = req.body;
+    const { PatientID, Status, PharmCounter, PrescriptionID } = req.body;
+    const CognitoSub = req.user.sub;
+
+    const db = await initDatabase();
+    const doctor = await db.get("SELECT StaffID FROM Staff WHERE CognitoSub = ?", [CognitoSub]);
+
+    if (!doctor) {
+      return res.status(404).json({ message: "Doctor not found" });
+    }
 
     if (!PatientID) {
       return res.status(400).json({ message: "Missing required fields: PatientID" });
     }
-
-    const db = await initDatabase();
-
     const now = new Date().toISOString().replace("T", " ").split(".")[0];
 
     await db.run(
-      `INSERT INTO Queue (PatientID, Status, DateTime, PharmCounter, PharmacistID, PrescriptionID) 
+      `INSERT INTO Queues (PatientID, Status, DateTime, PharmCounter, DoctorID, PrescriptionID)
        VALUES (?, ?, ?, ?, ?, ?)`,
-      [PatientID, Status || "waiting", now, PharmCounter || null, PharmacistID || null, PrescriptionID || null]
+      [PatientID, Status || "waiting", now, PharmCounter || "-", doctor.StaffID, PrescriptionID || null]
     );
 
     res.status(201).json({ message: "Patient added to queue successfully" });
@@ -41,7 +46,7 @@ async function deleteQueue(req, res) { // หมอ
     try {
         const { id } = req.params;
         const db = await initDatabase();
-        await db.run("DELETE FROM Queue WHERE QueueID = ?", [id]);
+        await db.run("DELETE FROM Queues WHERE QueueID = ?", [id]);
         res.status(200).json({ message: "Queue deleted successfully" });
     } catch (error) {
         console.error(error);
@@ -54,7 +59,7 @@ async function getQueue(req, res) { // หมอ + เภสัช
     try {
         const { id } = req.params;
         const db = await initDatabase();
-        const queue = await db.get("SELECT * FROM Queue WHERE QueueID = ?", [id]);
+        const queue = await db.get("SELECT * FROM Queues WHERE QueueID = ?", [id]);
         res.status(200).json(queue);
     } catch (error) {
         console.error(error);
@@ -65,9 +70,9 @@ async function getQueue(req, res) { // หมอ + เภสัช
 async function updateQueue(req, res) { // หมอ 
     try {
         const { id } = req.params;
-        const { PharmCounter, PharmacistID, PrescriptionID } = req.body
+        const { PharmCounter, DoctorID, PrescriptionID } = req.body
         const db = await initDatabase();
-        const queue = await db.get("UPDATE Queue SET PharmCounter = ?, PharmacistID = ?, PrescriptionID = ? WHERE QueueID = ?", [PharmCounter, PharmacistID, PrescriptionID, id]);
+        const queue = await db.get("UPDATE Queues SET PharmCounter = ?, DoctorID = ?, PrescriptionID = ? WHERE QueueID = ?", [PharmCounter, DoctorID, PrescriptionID, id]);
         res.status(200).json(queue);
     } catch (error) {
         console.error(error);
@@ -80,7 +85,7 @@ async function updateQueueStatus(req, res) { // เภสัช
         const { id } = req.params;
         const { Status } = req.body;
         const db = await initDatabase();
-        await db.run("UPDATE Queue SET Status = ? WHERE QueueID = ?", [Status, id]);
+        await db.run("UPDATE Queues SET Status = ? WHERE QueueID = ?", [Status, id]);
         res.status(200).json({ message: "Queue status updated successfully" });
     } catch (error) {
         console.error(error);
