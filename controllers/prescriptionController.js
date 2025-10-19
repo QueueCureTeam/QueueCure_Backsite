@@ -50,17 +50,33 @@ async function addPrescription(req, res) {
     }
 
     for (const item of prescriptions) {
-      const { DrugID, Quantity, Dosage } = item;
+        const { DrugID, Quantity, Dosage } = item;
+        if (!DrugID || !Quantity || !Dosage) {
+            console.warn("ข้ามรายการที่ข้อมูลไม่ครบ:", item);
+            continue;
+        }
 
-      if (!DrugID || !Quantity || !Dosage) {
-        console.warn("ข้ามรายการที่ข้อมูลไม่ครบ:", item);
-        continue;
-      }
+        const drug = await db.get("SELECT StockQuantity FROM Drug WHERE DrugID = ?", [DrugID]);
+        
+        if (!drug) {
+            console.warn("ไม่พบยา DrugID:", DrugID);
+            continue;
+        }
+        
+        if (drug.StockQuantity < Quantity) {
+            console.warn("Stock ไม่พอสำหรับ DrugID:", DrugID);
+            continue;
+        }
 
-      await db.run(
-        "INSERT INTO Prescription (PrescriptionID, DrugID, Quantity, Dosage) VALUES (?, ?, ?, ?)",
-        [PrescriptionID, DrugID, Quantity, Dosage]
-      );
+        await db.run(
+            "INSERT INTO Prescription (PrescriptionID, DrugID, Quantity, Dosage) VALUES (?, ?, ?, ?)",
+            [PrescriptionID, DrugID, Quantity, Dosage]
+        );
+
+        await db.run(
+            "UPDATE Drug SET StockQuantity = StockQuantity - ? WHERE DrugID = ?",
+            [Quantity, DrugID]
+        );
     }
         res.status(201).json({ message: "Prescription added successfully" });
     } catch (error) {
