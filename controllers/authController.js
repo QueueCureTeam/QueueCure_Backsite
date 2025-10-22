@@ -58,19 +58,19 @@ async function verifyToken (req, res, next) {
 };
 
 
-function checkRole(requiredRole) {
+function checkRole(...requiredRoles) {
   return (req, res, next) => {
     if (!req.user) {
       return res.status(403).json({ message: "Forbidden: No user information found." });
     }
+
     const userGroups = req.user['cognito:groups'];
 
-    if (userGroups && userGroups.includes(requiredRole)) {
-      next(); 
+    if (userGroups && requiredRoles.some(role => userGroups.includes(role))) {
+      next();
     } else {
       res.status(403).json({ message: "Forbidden: You do not have the required permissions." });
     }
   };
 }
-
 module.exports = { verifyToken, checkRole };
