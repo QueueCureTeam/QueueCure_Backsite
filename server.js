@@ -58,6 +58,17 @@ app.get('/auth/login', (req, res) => {
   res.redirect(loginUrl);
 });
 
+
+app.get('/auth/logout', (req, res) => {
+  const clientId = process.env.CLIENT_ID;
+  const redirectUri = "http://localhost:3000"; 
+  const cognitoDomain = process.env.COGNITO_DOMAIN;
+
+  const logoutUrl = `https://${cognitoDomain}/logout?client_id=${clientId}&logout_uri=${encodeURIComponent(redirectUri)}`;
+  res.redirect(logoutUrl);
+});
+
+
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });

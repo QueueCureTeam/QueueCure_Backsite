@@ -66,13 +66,14 @@ async function initDatabase() {
   //Queue
   await db.exec(`
     CREATE TABLE IF NOT EXISTS Queues (
-      QueueID        INTEGER PRIMARY KEY AUTOINCREMENT,
-      PatientID      INTEGER NOT NULL,
-      Status         TEXT,
-      DateTime       TEXT DEFAULT (datetime('now','localtime')),
-      PharmCounter   TEXT,
-      DoctorID   INTEGER,
-      PrescriptionID TEXT,
+      QueueID         INTEGER PRIMARY KEY AUTOINCREMENT,
+      PatientID       INTEGER NOT NULL,
+      Status          TEXT,
+      DeliveryOption  TEXT,
+      DateTime        TEXT DEFAULT (datetime('now','localtime')),
+      PharmCounter    TEXT,
+      DoctorID        INTEGER,
+      PrescriptionID  TEXT,
       FOREIGN KEY (PatientID) REFERENCES Patient(PatientID),
       FOREIGN KEY (DoctorID) REFERENCES Staff(StaffID)
     );

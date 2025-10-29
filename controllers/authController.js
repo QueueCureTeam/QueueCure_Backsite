@@ -66,11 +66,25 @@ function checkRole(...requiredRoles) {
 
     const userGroups = req.user['cognito:groups'];
 
-    if (userGroups && requiredRoles.some(role => userGroups.includes(role))) {
+    if (!userGroups || userGroups.length === 0) {
+      if (requiredRoles.length === 0) return next();
+      return res.status(403).json({ message: "Forbidden: You do not have the required permissions." });
+    }
+
+    if (requiredRoles.length === 0) {
+      if (userGroups.includes("doctor") || userGroups.includes("pharmacist")) {
+        return res.status(403).json({ message: "Forbidden: Doctors and pharmacists are not allowed." });
+      }
+      return next();
+    }
+    const hasRole = requiredRoles.some(role => userGroups.includes(role));
+
+    if (hasRole) {
       next();
     } else {
       res.status(403).json({ message: "Forbidden: You do not have the required permissions." });
     }
   };
 }
+
 module.exports = { verifyToken, checkRole };

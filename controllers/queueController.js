@@ -132,13 +132,25 @@ async function getPatientQueue(req, res) {  // คนไข้
   }
 }
 
-
 async function updateQueueStatus(req, res) { // เภสัช
     try {
         const { id } = req.params;
         const { Status, PharmCounter } = req.body;
         const db = await initDatabase();
         await db.run("UPDATE Queues SET Status = ?, PharmCounter = ? WHERE QueueID = ?", [Status, PharmCounter, id]);
+        res.status(200).json({ message: "Queue status updated successfully" });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+}
+
+async function updateQueueToDelivery(req, res) { // เภสัช
+    try {
+        const { id } = req.params;
+        const { DeliveryOption, Status } = req.body;
+        const db = await initDatabase();
+        await db.run("UPDATE Queues SET DeliveryOption = ?, Status = ? WHERE QueueID = ?", [DeliveryOption, Status, id]);
         res.status(200).json({ message: "Queue status updated successfully" });
     } catch (error) {
         console.error(error);
@@ -175,4 +187,4 @@ async function getPatient(req, res) {
     }
 }
 
-module.exports = { getQueue, addQueue, deleteQueue, updateQueueStatus, getAllQueues, getAllPatient, getPatient, getPatientQueue };
+module.exports = { getQueue, addQueue, deleteQueue, updateQueueStatus, getAllQueues, getAllPatient, getPatient, getPatientQueue, updateQueueToDelivery };
