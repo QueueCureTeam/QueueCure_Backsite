@@ -1,61 +1,70 @@
-
-require("dotenv").config();
-
 const jwt = require("jsonwebtoken");
 const jwkToPem = require("jwk-to-pem");
 const axios = require("axios");
-
+const { getSecret } = require("../aws_config/awsSecret");
 
 let pems;
+let cachedSecrets;
+
+async function loadSecrets() {
+  if (!cachedSecrets) {
+    cachedSecrets = await getSecret("web-Secret");
+  }
+  return cachedSecrets;
+}
 
 async function fetchPems() {
   if (pems) return pems;
 
-  const region = process.env.AWS_REGION;
-  const userPoolId = process.env.USER_POOL_ID;
+  const secrets = await loadSecrets();
+  const region = secrets.AWS_REGION;
+  const userPoolId = secrets.USER_POOL_ID;
+
   const url = `https://cognito-idp.${region}.amazonaws.com/${userPoolId}/.well-known/jwks.json`;
 
   const { data } = await axios.get(url);
   pems = {};
-  data.keys.forEach(key => {
+  data.keys.forEach((key) => {
     pems[key.kid] = jwkToPem(key);
   });
   return pems;
 }
+async function verifyToken(req, res, next) {
+  const token = req.headers.authorization?.split(" ")[1];
+  if (!token) return res.status(401).json({ message: "Unauthorized" });
 
-async function verifyToken (req, res, next) {
-    const token = req.headers.authorization?.split(" ")[1];
+  try {
+    const [secrets, pems] = await Promise.all([loadSecrets(), fetchPems()]);
+    const decoded = jwt.decode(token, { complete: true });
 
-    if (!token) return res.status(401).json({ message: "Unauthorized" });
-
-    try {
-        const pems = await fetchPems();
-        const decoded = jwt.decode(token, { complete: true });
-        if (!decoded || !decoded.header) {
-            return res.status(401).json({ message: "Invalid token", error: token });
-        }
-        const kid = decoded.header.kid;
-        const pem = pems[kid];
-        if (!pem) throw new Error("Invalid token");
-
-        jwt.verify(
-            token, 
-            pem, 
-                { 
-                algorithms: ["RS256"],
-                issuer: `https://cognito-idp.${process.env.AWS_REGION}.amazonaws.com/${process.env.USER_POOL_ID}`,
-                audience: process.env.CLIENT_ID 
-                }, 
-            (err, payload) => {
-        if (err) return res.status(401).json({ message: "Invalid token" });
-            req.user = payload; 
-            next();
-        });
-    } catch (err) {
-        console.error(err);
-        res.status(401).json({ message: "Unauthorized" });
+    if (!decoded || !decoded.header) {
+      return res.status(401).json({ message: "Invalid token" });
     }
-};
+
+    const kid = decoded.header.kid;
+    const pem = pems[kid];
+    if (!pem) throw new Error("Invalid token (no matching PEM)");
+
+    jwt.verify(
+      token,
+      pem,
+      {
+        algorithms: ["RS256"],
+        issuer: `https://cognito-idp.${secrets.AWS_REGION}.amazonaws.com/${secrets.USER_POOL_ID}`,
+        audience: secrets.CLIENT_ID,
+      },
+      (err, payload) => {
+        if (err) return res.status(401).json({ message: "Invalid token" });
+        req.user = payload;
+        next();
+      }
+    );
+  } catch (err) {
+    console.error("verifyToken error:", err);
+    res.status(401).json({ message: "Unauthorized" });
+  }
+}
+
 
 
 function checkRole(...requiredRoles) {
