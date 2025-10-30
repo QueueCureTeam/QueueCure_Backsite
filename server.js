@@ -21,9 +21,10 @@ async function startServer() {
 
   app.use(
     cors({
-      origin: process.env.FRONTEND_URL,
+      origin: [process.env.FRONTEND_URL, "http://queuecure.nettae.xyz/", "https://queuecure.nettae.xyz/"],
       methods: ["GET", "POST", "PUT", "DELETE"],
       credentials: true,
+      default: "https://queuecure.nettae.xyz/"
     })
   );
 
