@@ -47,8 +47,9 @@ async function initDatabase() {
       Details       TEXT,
       Expiry_date   DATE,
       Price         REAL,
-      StockQuantity INTEGER
-    );
+      StockQuantity INTEGER,
+      ImageFileName TEXT
+     );
   `);
 
   //Prescription

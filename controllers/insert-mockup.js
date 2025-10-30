@@ -9,6 +9,7 @@ db.serialize(() => {
     Expiry_date: "2027-10-31",
     Price: 50.00,
     StockQuantity: 1500,
+    ImageFileName: "Paracetamol.png"
   },
   {
     Name: "Amoxicillin (อะม็อกซีซิลลิน)",
@@ -16,6 +17,7 @@ db.serialize(() => {
     Expiry_date: "2026-06-30",
     Price: 120.50,
     StockQuantity: 350,
+    ImageFileName: "Amoxicillin.jpg"
   },
   {
     Name: "Ibuprofen (ไอบูโพรเฟน)",
@@ -23,6 +25,7 @@ db.serialize(() => {
     Expiry_date: "2027-01-31",
     Price: 85.00,
     StockQuantity: 600,
+    ImageFileName: "Ibuprofen.png"
   },
   {
     Name: "Loratadine (ลอราทาดีน)",
@@ -30,6 +33,7 @@ db.serialize(() => {
     Expiry_date: "2026-08-31",
     Price: 60.75,
     StockQuantity: 420,
+    ImageFileName: "Loratadine.webp"
   },
   {
     Name: "Omeprazole (โอเมพราโซล)",
@@ -37,6 +41,7 @@ db.serialize(() => {
     Expiry_date: "2027-05-31",
     Price: 250.00,
     StockQuantity: 200,
+    ImageFileName: "Omeprazole.webp"
   },
   {
     Name: "Simvastatin (ซิมวาสแตติน)",
@@ -44,6 +49,7 @@ db.serialize(() => {
     Expiry_date: "2026-11-30",
     Price: 300.00,
     StockQuantity: 180,
+    ImageFileName: "Simvastatin.webp"
   },
   {
     Name: "Metformin (เมทฟอร์มิน)",
@@ -51,6 +57,7 @@ db.serialize(() => {
     Expiry_date: "2027-03-31",
     Price: 180.25,
     StockQuantity: 300,
+    ImageFileName: "Metformin.webp"
   },
   {
     Name: "Amlodipine (แอมโลดิพีน)",
@@ -58,6 +65,7 @@ db.serialize(() => {
     Expiry_date: "2026-09-30",
     Price: 150.00,
     StockQuantity: 250,
+    ImageFileName: "Amlodipine.jpeg"
   },
   {
     Name: "Salbutamol Inhaler (ยาพ่นซัลบูตามอล)",
@@ -65,6 +73,7 @@ db.serialize(() => {
     Expiry_date: "2027-04-30",
     Price: 450.00,
     StockQuantity: 80,
+    ImageFileName: "SalbutamolInhaler.webp"
   },
   {
     Name: "Prednisolone (เพรดนิโซโลน)",
@@ -72,11 +81,12 @@ db.serialize(() => {
     Expiry_date: "2026-07-31",
     Price: 220.00,
     StockQuantity: 120,
+    ImageFileName: "Prednisolone.jpg"
   },
 ];
   const stmt = db.prepare(`
-    INSERT INTO Drug (Name, Details, Expiry_date, Price, StockQuantity)
-    VALUES (?, ?, ?, ?, ?)
+    INSERT INTO Drug (Name, Details, Expiry_date, Price, StockQuantity, ImageFileName)
+    VALUES (?, ?, ?, ?, ?, ?)
   `);
 
   mockDrugs.forEach((drug) => {
@@ -86,6 +96,7 @@ db.serialize(() => {
       drug.Expiry_date,
       drug.Price,
       drug.StockQuantity,
+      drug.ImageFileName,
       (err) => {
         if (err) console.error("❌ Insert error:", err.message);
       }

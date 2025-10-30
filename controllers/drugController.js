@@ -15,7 +15,16 @@ async function getDrug(req, res) {
     try {
         const db = await initDatabase();
         const { id } = req.params;
+        const S3_BASE_URL = "https://image-storage-bucket-s3.s3.us-east-1.amazonaws.com/public/";
         const drug = await db.get("SELECT * FROM Drug WHERE DrugID = ?", [id]);
+        if (!drug) {
+            return res.status(404).json({ message: "Drug not found" });
+        }
+        if (drug.ImageFileName) {
+            drug.ImageURL = S3_BASE_URL + encodeURIComponent(drug.ImageFileName);
+        } else {
+            drug.ImageURL = null; 
+        }
         res.status(200).json(drug);
     } catch (error) {
         console.error(error);
