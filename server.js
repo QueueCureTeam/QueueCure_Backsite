@@ -4,7 +4,6 @@ const bodyParser = require("body-parser");
 const cors = require("cors");
 const fs = require("fs");
 const path = require("path");
-const { getSecret } = require("./aws_config/awsSecret");
 const { initDatabase } = require("./database/database");
 
 // routes
@@ -17,15 +16,12 @@ const staffRoutes = require("./routes/staffRoutes");
 
 async function startServer() {
   await initDatabase();
-  const secretName = "web-Secret"; // ชื่อตามใน Secrets Manager
-  const secrets = await getSecret(secretName);
-
   const app = express();
-  const PORT = secrets.PORT || 3000;
+  const PORT = process.env.PORT || 3000;
 
   app.use(
     cors({
-      origin: secrets.FRONTEND_URL,
+      origin: process.env.FRONTEND_URL,
       methods: ["GET", "POST", "PUT", "DELETE"],
       credentials: true,
     })
@@ -59,9 +55,9 @@ async function startServer() {
   });
 
   app.get("/auth/login", (req, res) => {
-    const clientId = secrets.CLIENT_ID;
-    const redirectUri = secrets.REDIRECT_URI;
-    const cognitoDomain = secrets.COGNITO_DOMAIN;
+    const clientId = process.env.CLIENT_ID;
+    const redirectUri = process.env.REDIRECT_URI;
+    const cognitoDomain = process.env.COGNITO_DOMAIN;
 
     const loginUrl = `https://${cognitoDomain}/login?client_id=${clientId}&response_type=code&scope=email+openid+phone&redirect_uri=${encodeURIComponent(
       redirectUri
@@ -70,9 +66,9 @@ async function startServer() {
   });
 
   app.get("/auth/logout", (req, res) => {
-    const clientId = secrets.CLIENT_ID;
-    const redirectUri = secrets.FRONTEND_URL;
-    const cognitoDomain = secrets.COGNITO_DOMAIN;
+    const clientId = process.env.CLIENT_ID;
+    const redirectUri = process.env.FRONTEND_URL;
+    const cognitoDomain = process.env.COGNITO_DOMAIN;
 
     const logoutUrl = `https://${cognitoDomain}/logout?client_id=${clientId}&logout_uri=${encodeURIComponent(
       redirectUri

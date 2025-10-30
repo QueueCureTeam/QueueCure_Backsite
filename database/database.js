@@ -1,6 +1,4 @@
 const mysql = require('mysql2/promise');
-const { SecretsManagerClient, GetSecretValueCommand } = require("@aws-sdk/client-secrets-manager");
-
 let pool; // connection
 
 async function initDatabase() {
@@ -19,18 +17,12 @@ async function initDatabase() {
     } 
     else {
         console.log("กำลังเชื่อมต่อ Database (RDS)...");
-        const SECRET_ID = "rds-credentials-newcred"; 
-        const client = new SecretsManagerClient();
-        const command = new GetSecretValueCommand({ SecretId: SECRET_ID });
-        const data = await client.send(command);
-        const secrets = JSON.parse(data.SecretString);
-        
         pool = mysql.createPool({
-            host: secrets.host,
-            user: secrets.username,
-            password: secrets.password,
-            database: secrets.dbname, 
-            port: 3306
+            host: process.env.RDS_HOST,
+            user: process.env.RDS_USER,
+            password: process.env.RDS_PASSWORD,
+            database: process.env.RDS_DBNAME,
+            port: process.env.RDS_PORT || 3306,
         });
     }
 
