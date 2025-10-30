@@ -1,5 +1,3 @@
-// Hello this is Drugดีลเล๊อเออ
-require("dotenv").config();
 const { initDatabase } = require("../database/database");
 
 async function getAllDrug(req, res) {
