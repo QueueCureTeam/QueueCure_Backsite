@@ -45,7 +45,7 @@ async function startServer() {
   app.use("/auth", authRoutes);
 
   app.get("/", (req, res) => {
-    res.sendFile(path.join(__dirname, "public", "signup.html"));
+    res.status(200).send('OK');
   });
 
   app.get("/auth/callback", (req, res) => {
