@@ -2,6 +2,7 @@ require("dotenv").config();
 const express = require("express");
 const bodyParser = require("body-parser");
 const cors = require("cors");
+const fs = require("fs");
 const path = require("path");
 const { getSecret } = require("./aws_config/awsSecret");
 const { initDatabase } = require("./database/database");
@@ -52,7 +53,9 @@ async function startServer() {
   });
 
   app.get("/auth/callback", (req, res) => {
-    res.sendFile(path.join(__dirname, "public", "callback.html"));
+    let html = fs.readFileSync(path.join(__dirname, "public", "callback.html"), "utf8");
+    html = html.replace("__FRONTEND_URL__", process.env.FRONTEND_URL);
+    res.send(html);
   });
 
   app.get("/auth/login", (req, res) => {
