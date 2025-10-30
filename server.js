@@ -4,6 +4,7 @@ const bodyParser = require("body-parser");
 const cors = require("cors");
 const path = require("path");
 const { getSecret } = require("./aws_config/awsSecret");
+const { initDatabase } = require("./database/database");
 
 // routes
 const patientRoutes = require("./routes/patientRoutes");
@@ -14,6 +15,7 @@ const prescriptionRoutes = require("./routes/prescriptRoutes");
 const staffRoutes = require("./routes/staffRoutes");
 
 async function startServer() {
+  await initDatabase();
   const secretName = "web-Secret"; // ชื่อตามใน Secrets Manager
   const secrets = await getSecret(secretName);
 

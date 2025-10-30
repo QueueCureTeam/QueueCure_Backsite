@@ -1,39 +1,41 @@
-const { initDatabase } = require("../database/database");
- 
+const { getDbPool } = require("../database/database");
+
 async function createStaff (req, res) { /* ยิง postman */
     try {
         console.log("Body received:", req.body);
         const { CognitoSub, Role, Name, Surname, LicenseID, Gender} = req.body;
-        const db = await initDatabase();
-        await db.run(
+        
+        const db = getDbPool();
+
+        await db.execute(
             "INSERT INTO Staff (CognitoSub, Role, Name, Surname, LicenseID, Gender) VALUES (?, ?, ?, ?, ?, ?)",
             [CognitoSub, Role, Name, Surname, LicenseID, Gender]);
+        
         res.status(201).json({ message: "Staff created successfully" });
     } catch (err) {
         console.error(err);
         res.status(500).json({ message: "Internal server error" });
     }
 };
+
 async function getProfile (req, res) {
     try {
         const userId = req.user.sub;
-        const db = await initDatabase();
+        const db = getDbPool();
 
         let Staff;
         try {
-            Staff = await db.get("SELECT * FROM Staff WHERE CognitoSub = ?", [userId]);
+            const [staffRows] = await db.query("SELECT * FROM Staff WHERE CognitoSub = ?", [userId]);
+            Staff = staffRows[0];
+
         } catch (err) {
             console.error("SQL Error:", err.message);
             return res.status(500).json({ message: "DB query failed" });
         }
 
+
         if (!Staff) {
-            await db.run(
-                "INSERT INTO Staff (CognitoSub, Name, Surname, LicenseID, Gender) VALUES (?, ?, ?, ?, ?)",
-                [userId, "", "", "", ""]
-            );
-        const newStaff = await db.get("SELECT * FROM Staff WHERE StaffID = ?", [userId]);
-        return res.status(200).json(newStaff);
+            return res.status(404).json({ message: "Staff profile not found." });
         }
 
         res.status(200).json(Staff);  
@@ -48,12 +50,13 @@ async function editProfile(req, res) {
         console.log("Body received:", req.body);
         const { CognitoSub, Role, Name, Surname, LicenseID, Gender} = req.body;
 
-        const db = await initDatabase();
+        const db = getDbPool();
 
-        const Staff = await db.get("SELECT * FROM Staff WHERE CognitoSub = ?", [CognitoSub]);
+        const [staffRows] = await db.query("SELECT * FROM Staff WHERE CognitoSub = ?", [CognitoSub]);
+        const Staff = staffRows[0];
 
         if (!Staff) {
-        await db.run(`
+        await db.execute(`
             INSERT INTO Staff (CognitoSub, Role, Name, Surname, LicenseID, Gender)
             VALUES (?, ?, ?, ?, ?, ?)
         `, [CognitoSub, Role, Name, Surname, LicenseID, Gender]);
@@ -61,7 +64,7 @@ async function editProfile(req, res) {
         return res.status(201).json({ message: "Profile created successfully" });
         }
 
-        await db.run(`
+        await db.execute(`
             UPDATE Staff
             SET Role = ?, Name = ?, Surname = ?, LicenseID = ?, Gender = ?
             WHERE CognitoSub = ?

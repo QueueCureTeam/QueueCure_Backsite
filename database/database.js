@@ -1,94 +1,50 @@
-const sqlite3 = require("sqlite3");
-const { open } = require("sqlite");
-const path = require("path");
+const mysql = require('mysql2/promise');
+const { SecretsManagerClient, GetSecretValueCommand } = require("@aws-sdk/client-secrets-manager");
+
+let pool; // connection
 
 async function initDatabase() {
-  const db = await open({
-    filename: path.join(__dirname, "QueueCure.db"),
-    driver: sqlite3.Database
-  });
+    if (pool) return pool;
 
-  await db.exec("PRAGMA foreign_keys = ON;");
+    if (process.env.NODE_ENV === 'development') {
+        console.log("กำลังเชื่อมต่อ Database (Localhost)...");
+        pool = mysql.createPool({
+            host: '127.0.0.1', 
+            user: 'root',      
+            password: '',      
+            database: 'queuecure', 
+            port: 3306
+        });
 
-  //Patient
-  await db.exec(`
-    CREATE TABLE IF NOT EXISTS Patient (
-      PatientID     INTEGER PRIMARY KEY AUTOINCREMENT,
-      CognitoSub TEXT UNIQUE NOT NULL,
-      PhoneNumber   TEXT,
-      Address       TEXT,
-      NationalID    TEXT,
-      ProfileImage  TEXT,
-      Name          TEXT,
-      Surname       TEXT,
-      Age           INTEGER,
-      Gender        TEXT
-    );
-  `);
+    } 
+    else {
+        console.log("กำลังเชื่อมต่อ Database (RDS)...");
+        const SECRET_ID = "rds-credentials-newcred"; 
+        const client = new SecretsManagerClient();
+        const command = new GetSecretValueCommand({ SecretId: SECRET_ID });
+        const data = await client.send(command);
+        const secrets = JSON.parse(data.SecretString);
+        
+        pool = mysql.createPool({
+            host: secrets.host,
+            user: secrets.username,
+            password: secrets.password,
+            database: secrets.dbname, 
+            port: 3306
+        });
+    }
 
-  //Staff
-  await db.exec(`
-    CREATE TABLE IF NOT EXISTS Staff (
-      StaffID   INTEGER PRIMARY KEY AUTOINCREMENT,
-      CognitoSub TEXT UNIQUE NOT NULL,
-      Role      TEXT NOT NULL,
-      Name      TEXT NOT NULL,
-      Surname   TEXT NOT NULL,
-      LicenseID TEXT NOT NULL,
-      Gender    TEXT
-    );
-  `);
-
-  //Drug
-  await db.exec(`
-    CREATE TABLE IF NOT EXISTS Drug (
-      DrugID        INTEGER PRIMARY KEY AUTOINCREMENT,
-      Name          TEXT NOT NULL,
-      Details       TEXT,
-      Expiry_date   DATE,
-      Price         REAL,
-      StockQuantity INTEGER,
-      ImageFileName TEXT
-     );
-  `);
-
-  //Prescription
-  await db.exec(`
-    CREATE TABLE IF NOT EXISTS Prescription (
-      RowID          INTEGER PRIMARY KEY AUTOINCREMENT,
-      PrescriptionID TEXT NOT NULL,
-      DrugID         INTEGER NOT NULL,
-      Quantity       INTEGER NOT NULL,
-      Dosage         TEXT,
-      FOREIGN KEY (DrugID) REFERENCES Drug(DrugID)
-    );
-  `);
-
-  //Queue
-  await db.exec(`
-    CREATE TABLE IF NOT EXISTS Queues (
-      QueueID         INTEGER PRIMARY KEY AUTOINCREMENT,
-      PatientID       INTEGER NOT NULL,
-      Status          TEXT,
-      DeliveryOption  TEXT,
-      DateTime        TEXT DEFAULT (datetime('now','localtime')),
-      PharmCounter    TEXT,
-      DoctorID        INTEGER,
-      PrescriptionID  TEXT,
-      FOREIGN KEY (PatientID) REFERENCES Patient(PatientID),
-      FOREIGN KEY (DoctorID) REFERENCES Staff(StaffID)
-    );
-  `);
-
-  return db;
+    const connection = await pool.getConnection();
+    console.log("✅ Database เชื่อมต่อสำเร็จ!");
+    connection.release();
+    return pool;
 }
 
-if (require.main === module) {
-  (async () => {
-    const db = await initDatabase();
-    console.log("Database initialized!!");
-    await db.close();
-  })();
+function getDbPool() {
+    if (!pool) {
+        throw new Error("Database pool ยังไม่ถูกสร้าง! เรียก initDatabase() ก่อน");
+    }
+    return pool;
 }
 
-module.exports = { initDatabase };
+module.exports = { initDatabase, getDbPool };

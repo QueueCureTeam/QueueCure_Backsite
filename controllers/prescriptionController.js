@@ -1,9 +1,9 @@
-const { initDatabase } = require("../database/database");
+const { getDbPool } = require("../database/database");
 
 async function getAllPrescription(req, res) {
     try {
-        const db = await initDatabase();
-        const Prescriptions = await db.all("SELECT * FROM Prescription");
+        const db = getDbPool();
+        const [Prescriptions] = await db.query("SELECT * FROM Prescription");
         res.status(200).json(Prescriptions);
     } catch (error) {
         console.error(error);
@@ -13,24 +13,20 @@ async function getAllPrescription(req, res) {
 
 async function getPrescription(req, res) {
      try {
-        const db = await initDatabase();
+        const db = getDbPool();
         const { id } = req.params;
         
-        const Prescriptions = await db.all(`
+        const query = `
             SELECT 
-                p.RowID,
-                p.PrescriptionID,
-                p.DrugID,
-                p.Quantity,
-                p.Dosage,
-                d.Name as DrugName,
-                d.Details as DrugDetails,
-                d.Price as DrugPrice,
-                d.Expiry_date
+                p.RowID, p.PrescriptionID, p.DrugID, p.Quantity, p.Dosage,
+                d.Name as DrugName, d.Details as DrugDetails,
+                d.Price as DrugPrice, d.Expiry_date
             FROM Prescription p
             LEFT JOIN Drug d ON p.DrugID = d.DrugID
             WHERE p.PrescriptionID = ?
-        `, [id]);
+        `;
+        
+        const [Prescriptions] = await db.query(query, [id]);
         
         res.status(200).json(Prescriptions);
     } catch (error) {
@@ -40,46 +36,59 @@ async function getPrescription(req, res) {
 }
 
 async function addPrescription(req, res) { 
+    const db = getDbPool();
+    let connection; 
+
     try {
+        connection = await db.getConnection(); 
+        await connection.beginTransaction(); 
+
         const { PrescriptionID, prescriptions } = req.body;
-        const db = await initDatabase();
         if (!PrescriptionID || !Array.isArray(prescriptions) || prescriptions.length === 0) {
-      return res.status(400).json({ message: "Invalid input data" });
-    }
-
-    for (const item of prescriptions) {
-        const { DrugID, Quantity, Dosage } = item;
-        if (!DrugID || !Quantity || !Dosage) {
-            console.warn("ข้ามรายการที่ข้อมูลไม่ครบ:", item);
-            continue;
+            connection.release();
+            return res.status(400).json({ message: "Invalid input data" });
         }
 
-        const drug = await db.get("SELECT StockQuantity FROM Drug WHERE DrugID = ?", [DrugID]);
-        
-        if (!drug) {
-            console.warn("ไม่พบยา DrugID:", DrugID);
-            continue;
-        }
-        
-        if (drug.StockQuantity < Quantity) {
-            console.warn("Stock ไม่พอสำหรับ DrugID:", DrugID);
-            continue;
+        for (const item of prescriptions) {
+            const { DrugID, Quantity, Dosage } = item;
+            if (!DrugID || !Quantity || !Dosage) {
+                console.warn("ข้ามรายการที่ข้อมูลไม่ครบ:", item);
+                continue;
+            }
+
+            const [drugRows] = await connection.query("SELECT StockQuantity FROM Drug WHERE DrugID = ?", [DrugID]);
+            const drug = drugRows[0];
+            
+            if (!drug) {
+                console.warn("ไม่พบยา DrugID:", DrugID);
+                continue; 
+            }
+            
+            if (drug.StockQuantity < Quantity) {
+                console.warn("Stock ไม่พอสำหรับ DrugID:", DrugID);
+                continue;
+            }
+
+            await connection.execute(
+                "INSERT INTO Prescription (PrescriptionID, DrugID, Quantity, Dosage) VALUES (?, ?, ?, ?)",
+                [PrescriptionID, DrugID, Quantity, Dosage]
+            );
+
+            await connection.execute(
+                "UPDATE Drug SET StockQuantity = StockQuantity - ? WHERE DrugID = ?",
+                [Quantity, DrugID]
+            );
         }
 
-        await db.run(
-            "INSERT INTO Prescription (PrescriptionID, DrugID, Quantity, Dosage) VALUES (?, ?, ?, ?)",
-            [PrescriptionID, DrugID, Quantity, Dosage]
-        );
-
-        await db.run(
-            "UPDATE Drug SET StockQuantity = StockQuantity - ? WHERE DrugID = ?",
-            [Quantity, DrugID]
-        );
-    }
+        await connection.commit();
         res.status(201).json({ message: "Prescription added successfully" });
+
     } catch (error) {
         console.error(error);
+        if (connection) await connection.rollback(); 
         res.status(500).json({ message: "Internal server error" });
+    } finally {
+        if (connection) connection.release(); 
     }
 }
 
@@ -87,8 +96,8 @@ async function updatePrescription(req, res) {
     try {
         const { id } = req.params;
         const { DrugID, Quantity, Dosage } = req.body;
-        const db = await initDatabase();
-        await db.run("UPDATE Prescription SET DrugID = ?, Quantity = ?, Dosage = ? WHERE PrescriptionID = ?", [DrugID, Quantity, Dosage, id]);
+        const db = getDbPool();
+        await db.execute("UPDATE Prescription SET DrugID = ?, Quantity = ?, Dosage = ? WHERE PrescriptionID = ?", [DrugID, Quantity, Dosage, id]);
         res.status(200).json({ message: "Prescription updated successfully" });
     } catch (error) {
         console.error(error);
@@ -96,11 +105,11 @@ async function updatePrescription(req, res) {
     }
 }
 
-async function deletePrescription(req, res) { // อันนี้ไว้ใช้กับ postman only
+async function deletePrescription(req, res) { 
     try {
         const { id } = req.params;
-        const db = await initDatabase();
-        await db.run("DELETE FROM Prescription WHERE PrescriptionID = ?", [id]);
+        const db = getDbPool();
+        await db.execute("DELETE FROM Prescription WHERE PrescriptionID = ?", [id]);
         res.status(200).json({ message: "Prescription deleted successfully" });
     } catch (error) {
         console.error(error);
