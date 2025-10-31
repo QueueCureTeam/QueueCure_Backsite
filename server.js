@@ -21,7 +21,7 @@ async function startServer() {
 
   app.use(
     cors({
-      origin: [process.env.FRONTEND_URL, "http://queuecure.nettae.xyz/", "https://queuecure.nettae.xyz/"],
+      origin: [process.env.FRONTEND_URL, "http://queuecure.nettae.xyz", "https://queuecure.nettae.xyz", "https://homeothermal-crimsonly-benedict.ngrok-free.dev"],
       methods: ["GET", "POST", "PUT", "DELETE"],
       credentials: true,
       default: "https://queuecure.nettae.xyz/"
