@@ -19,7 +19,7 @@ router.post("/callback", async (req, res) => {
 
     try {
         const response = await axios.post(tokenUrl, qs.stringify(params), {
-            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            headers: { "ngrok-skip-browser-warning" : true, "Content-Type": "application/x-www-form-urlencoded" },
         });
 
         const { access_token, id_token, refresh_token } = response.data;
